@@ -36,7 +36,7 @@ then
     echo "Setting HTTPS proxy to ($https_proxy_host, $https_proxy_port)"
 fi
 
-mvn --batch-mode clean compile package \
+mvn --batch-mode -Dcheckstyle.skip clean compile package \
     -Dhttp.proxyHost=$http_proxy_host \
     -Dhttp.proxyPort=$http_proxy_port \
     -Dhttps.proxyHost=$https_proxy_host \

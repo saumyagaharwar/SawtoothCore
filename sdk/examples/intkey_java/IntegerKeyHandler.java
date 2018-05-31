@@ -103,16 +103,16 @@ public class IntegerKeyHandler implements TransactionHandler {
    * Helper function to decode State retrieved from the address of the name.
    * Convert the co.nstant.in.cbor.model.Map to a HashMap.
    */
-  public Map<String, Long> decodeState(byte[] bytes) throws CborException {
+  public Map<String, String> decodeState(byte[] bytes) throws CborException {
     ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
     co.nstant.in.cbor.model.Map data =
         (co.nstant.in.cbor.model.Map) new CborDecoder(bais).decodeNext();
     DataItem[] keys = data.getKeys().toArray(new DataItem[0]);
-    Map<String, Long> result = new HashMap();
+    Map<String, String> result = new HashMap();
     for (int i = 0; i < keys.length; i++) {
       result.put(
           keys[i].toString(),
-          Long.decode(data.get(keys[i]).toString()));
+          data.get(keys[i]).toString());
     }
     return result;
   }
@@ -121,7 +121,7 @@ public class IntegerKeyHandler implements TransactionHandler {
    * Helper function to encode the State that will be stored at the address of
    * the name.
    */
-  public Map.Entry<String, ByteString> encodeState(String address, String name, Long value)
+  public Map.Entry<String, ByteString> encodeState(String address, String name, String value)
       throws CborException {
     ByteArrayOutputStream boas = new ByteArrayOutputStream();
     new CborEncoder(boas).encode(new CborBuilder()
@@ -157,7 +157,7 @@ public class IntegerKeyHandler implements TransactionHandler {
       if (name.length() == 0) {
         throw new InvalidTransactionException("Name is required");
       }
-
+         
       if (name.length() > MAX_NAME_LENGTH) {
         throw new InvalidTransactionException(
           "Name must be a string of no more than "
@@ -177,9 +177,9 @@ public class IntegerKeyHandler implements TransactionHandler {
       }
 
       // validate value
-      Long value = null;
-
-      try {
+      String value = null;
+      value = updateMap.get("Value").toString();
+      /*try {
         value = Long.decode(updateMap.get("Value").toString());
       } catch (NumberFormatException ex) {
         throw new InvalidTransactionException(
@@ -196,7 +196,7 @@ public class IntegerKeyHandler implements TransactionHandler {
           + "no less than " + Long.toString(MIN_VALUE)
           + " and no greater than " + Long.toString(MAX_VALUE));
       }
-
+     */
       String address = null;
 
       try {
@@ -211,66 +211,20 @@ public class IntegerKeyHandler implements TransactionHandler {
 
       if (verb.equals("set")) {
         // The ByteString is cbor encoded dict/hashmap
-        Map<String, ByteString> possibleAddressValues = state.getState(Arrays.asList(address));
-        byte[] stateValueRep = possibleAddressValues.get(address).toByteArray();
-        Map<String, Long> stateValue = null;
-        if (stateValueRep.length > 0) {
-          stateValue = this.decodeState(stateValueRep);
-          if (stateValue.containsKey(name)) {
+        //Map<String, ByteString> possibleAddressValues = state.getState(Arrays.asList(address));
+        //byte[] stateValueRep = possibleAddressValues.get(address).toByteArray();
+        //Map<String, String> stateValue = null;
+        //if (stateValueRep.length > 0) {
+          //stateValue = this.decodeState(stateValueRep);
+          /*if (stateValue.containsKey(name)) {
             throw new InvalidTransactionException("Verb is set but Name already in state, "
                     + "Name: " + name + " Value: " + stateValue.get(name).toString());
           }
         }
-
-        if (value < 0) {
-          throw new InvalidTransactionException("Verb is set but Value is less than 0");
-        }
+*/
 
         // 'set' passes checks so store it in the state
         Map.Entry<String, ByteString> entry = this.encodeState(address, name, value);
-
-        Collection<Map.Entry<String, ByteString>> addressValues = Arrays.asList(entry);
-        addresses = state.setState(addressValues);
-      }
-      if (verb.equals("inc")) {
-        Map<String, ByteString> possibleValues = state.getState(Arrays.asList(address));
-        byte[] stateValueRep = possibleValues.get(address).toByteArray();
-        if (stateValueRep.length == 0) {
-          throw new InvalidTransactionException("Verb is inc but Name is not in state");
-        }
-        Map<String, Long> stateValue = this.decodeState(stateValueRep);
-        if (!stateValue.containsKey(name)) {
-          throw new InvalidTransactionException("Verb is inc but Name is not in state");
-        }
-        if (stateValue.get(name) + value > MAX_VALUE) {
-          throw new InvalidTransactionException(
-            "Inc would set Value to greater than " + Long.toString(MAX_VALUE));
-        }
-        // Increment the value in state by value
-        Map.Entry<String, ByteString> entry =
-            this.encodeState(address, name, stateValue.get(name) + value);
-        Collection<Map.Entry<String, ByteString>> addressValues = Arrays.asList(entry);
-        addresses = state.setState(addressValues);
-      }
-      if (verb.equals("dec")) {
-        Map<String, ByteString> possibleAddressResult = state.getState(Arrays.asList(address));
-        byte[] stateValueRep = possibleAddressResult.get(address).toByteArray();
-
-        if (stateValueRep.length == 0) {
-          throw new InvalidTransactionException("Verb is dec but Name is not in state");
-        }
-        Map<String, Long> stateValue = this.decodeState(stateValueRep);
-        if (!stateValue.containsKey(name)) {
-          throw new InvalidTransactionException("Verb is dec but Name is not in state");
-        }
-        if (stateValue.get(name) - value < MIN_VALUE) {
-          throw new InvalidTransactionException(
-            "Dec would set Value to less than " + Long.toString(MIN_VALUE));
-        }
-
-        // Decrement the value in state by value
-        Map.Entry<String, ByteString> entry =
-            this.encodeState(address, name, stateValue.get(name) - value);
 
         Collection<Map.Entry<String, ByteString>> addressValues = Arrays.asList(entry);
         addresses = state.setState(addressValues);
