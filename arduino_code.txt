@@ -1,0 +1,61 @@
+#include <dht.h>
+
+#define dht_apin A0 // Analog Pin sensor is connected to
+
+dht DHT;
+
+void setup(){
+
+Serial.begin(9600);
+Initialize_PlxDaq();
+delay(500);//Delay to let system boot
+//Serial.println("DHT11 Humidity & temperature Sensor\n\n");
+delay(1000);//Wait before accessing Sensor
+
+}//end "setup()"
+
+void loop(){
+//Start of Program
+
+DHT.read11(dht_apin);
+
+Write_PlxDaq();
+Serial.print("Current humidity = ");
+Serial.print(DHT.humidity);
+Serial.print("% ");
+Serial.print("temperature = ");
+Serial.print(DHT.temperature);
+Serial.println("C ");
+
+delay(5000);//Wait 5 seconds before accessing sensor again.
+
+//Fastest should be once every two seconds.
+
+}// end loop()
+
+
+void Write_PlxDaq()
+{
+Serial.print("DATA"); //always write "DATA" to Indicate the following as Data
+Serial.print(","); //Move to next column using a ","
+
+Serial.print("DATE"); //Store date on Excel
+Serial.print(","); //Move to next column using a ","
+
+Serial.print("TIME"); //Store date on Excel
+Serial.print(","); //Move to next column using a ","
+
+Serial.print(DHT.temperature); //Store date on Excel
+Serial.print(","); //Move to next column using a ","
+
+Serial.print(DHT.humidity); //Store date on Excel
+Serial.print(","); //Move to next column using a ","
+
+Serial.println(); //End of Row move to next row
+}
+
+void Initialize_PlxDaq()
+{
+Serial.println("CLEARDATA"); //clears up any data left from previous projects
+Serial.println("LABEL,Date,Time,Temperature,Humidity"); //always write LABEL, to indicate it as first line
+}
